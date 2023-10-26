@@ -1,0 +1,38 @@
+---
+title: "Final Day notebook 2"
+output: html_document
+date: "2023-10-26"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+# Metorite Landings Dashboard ETL
+
+## I. Load Libraries and Data
+
+Our overall gaol here should be to Clean the data and transform any and all necessary columns to be able to create the best dashboard we can out of this data that is available to us.
+
+```{r}
+library(tidyverse)
+
+meteor_df <- read_csv('Meteorite_Landings.csv')
+
+meteor_df
+
+```
+
+\*\* Constant columns are when we only have a singular value present within a column. This does not add any additional value to your analysis.
+
+```{r}
+meteor_df %>% count(nametype)
+```
+
+## II. Clean Data
+
+-   What are the value_counts in the constant columns? Do we truly only have a single value? Or do we have maybe one or two items in another category?
+
+```{r}
+str(meteor_df)
+```

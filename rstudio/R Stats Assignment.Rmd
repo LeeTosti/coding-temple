@@ -1,0 +1,180 @@
+---
+title: "Stats in R Assignment"
+author: "Alex Lucchesi"
+date: "2023/05/30"
+output: html_document
+---
+
+## Assignment
+
+For today's assignment, you will be given a blank notebook and a link to the [Call of Duty Dataset](https://www.kaggle.com/datasets/beridzeg45/call-of-duty-reviews) You will need to fill out the notebook and create your own code chunks to run code. Remember that we use this code without any quotation marks to create a code chunk: '`{r} '` \### Your Goal:
+
+To receive credit for today's assignment, you will need to:
+
+-   Import the dataset
+-   Load the dataset into a tibble
+-   Mutate a new column
+-   Create a hypothesis regarding your data and communicate that hypothesis in a scientific method.
+-   Create a notebook that has markdown cells, explaining your code and process/thoughts. **Your markdown should be well thought out and reflect a thorough analysis.**
+-   Clean the data
+-   Explore the data (include visualizations)
+-   Create a statistical test and communicate the results
+
+# I. Loading and Cleaning Data
+
+```{r}
+# Load necessary packages
+library(tidyverse, dplyr)
+```
+
+```{r}
+cod <- read.csv("call_of_duty_reviews.csv")
+```
+
+```{r}
+view(cod)
+```
+
+```{r}
+# Convert to a tibble
+tibble_cod <- as_tibble(cod)
+
+view(tibble_cod)
+```
+
+```{r}
+my_fun <- function(x){
+  names(x) <- names(x) %>% str_replace_all("\\.", '_') %>% tolower()
+  return(x)
+}
+tibble_cod <- my_fun(tibble_cod)
+tibble_cod
+```
+
+```{r}
+names(tibble_cod)
+```
+
+```{r}
+# Check for missing values
+sum(is.na(tibble_cod))
+```
+
+```{r}
+# Filter the tibble to remove rows with missing values
+tibble_cod <- tibble_cod %>% 
+  drop_na()
+
+view(tibble_cod)
+```
+
+```{r}
+# Filter my data to remove rows with empty strings in the platform column
+
+tibble_cod <- tibble_cod %>%
+  filter(platform != "")
+
+view(tibble_cod)
+```
+
+```{r}
+# Mutate a new column
+tibble_cod <- tibble_cod %>%
+  mutate(tibble_cod, avg_score = (critic_compound_score + user_compound_score)/2)
+
+view(tibble_cod)
+```
+
+## Hypotheses:
+
+-   Null Hypothesis (HO): There is no significant difference between critic scores and user scores.
+-   Alternative Hypothesis (H1): There is a significant difference between critic scores and user scores.
+
+# II. Visualizations
+
+```{r}
+# Histogram of user ratings
+
+#Find avg user rating
+avg_user_rating <- mean(tibble_cod$user_compound_score)
+
+ggplot(tibble_cod) +
+  geom_histogram(binwidth = 0.1, aes(x = user_compound_score), fill = 'blue', color = 'black')+
+  geom_vline(xintercept = avg_user_rating, color = 'white', linetype = 'dashed')
+```
+
+```{r}
+avg_critic_compound_score <- mean(tibble_cod$critic_compound_score)
+
+ggplot(tibble_cod) +
+  geom_histogram(binwidth = 0.1, aes(x = critic_compound_score), fill = 'red', color = 'black')+
+  geom_vline(xintercept = avg_critic_compound_score, color = 'white', linetype = 'dashed')
+```
+
+```{r}
+ggplot(tibble_cod) +
+  geom_histogram(binwidth = 0.1, fill = "blue", color = "black", aes(x = user_compound_score), alpha = 0.7) +
+  geom_histogram(binwidth = 0.1, fill = "red", color = "black", aes(x = critic_compound_score), alpha = 0.7) +
+  labs(title = "Distribution of User and Critic Ratings", x = "Rating", y = "Frequency")
+```
+
+```{r}
+# Box Plot of User Scores by Release Year
+ggplot(tibble_cod) +
+  geom_boxplot(aes(x = release_year, y = user_compound_score), fill = "blue") +
+  labs(title = "Box Plot of User Scores Over Time", x = "Release Year", y = "User Score")
+```
+
+```{r}
+ggplot(tibble_cod) +
+  geom_boxplot(aes(x = release_year, y = critic_compound_score), fill = 'red') +
+  labs(title = "Box Plot of Critic Scores Over Time", x = "Release Year", y = "Critic Score")
+```
+
+```{r}
+# Scatterplot with a regression line
+ggplot(tibble_cod) +
+  geom_point(aes(x = user_compound_score, y = critic_compound_score)) +
+  labs(title = "Comparison of User and Critic Scores", x = "User Score", y = "Critic Score")
+```
+
+```{r}
+cor(tibble_cod$user_compound_score, tibble_cod$critic_compound_score)
+```
+
+```{r}
+# Scatterplot with a regression line
+ggplot(tibble_cod) +
+  geom_point(aes(x = user_compound_score, y = critic_compound_score)) +
+  
+  # Add a linear regression line
+  geom_smooth(method = "lm", se = FALSE, color = "blue", aes(x = user_compound_score, y = critic_compound_score)) + 
+  
+  labs(title = "Comparison of User and Critic Scores", x = "User Score", y = "Critic Score")
+```
+
+#### A correlation coefficient of 0.04227803 (approximately 0.04) suggests a very weak linear relationship between user_compound_score and critic_compound_score. While a correlation coefficient measures the strength and direction of a linear relationship, a t-test can help you assess whether the means of the two groups (in this case, users and critics) significantly differ.
+
+```{r}
+
+```
+
+# III. Statistical testing
+
+### A t-test is appropriate when you are comparing the means of two groups to determine if there is a statistically significant difference between them.
+
+-   If the p-value is less than your chosen significance level (e.g., p \< 0.05), you can reject the null hypothesis.
+-   Rejecting the null hypothesis would mean that there is a significant difference in means between user scores and critic scores, even though the correlation is weak.
+-   Keep in mind that a weak correlation does not preclude the possibility of a significant difference in means.
+
+```{r}
+t.test(tibble_cod$user_compound_score, tibble_cod$critic_compound_score)
+```
+
+### Interpretation:
+
+The t-test suggests that there is some evidence against the null hypothesis (p-value ≈ 0.05508). The alternative hypothesis suggests that the true difference in means is not equal to 0, indicating that there may be a significant difference between user_compound_score and critic_compound_score. However, the evidence is not extremely strong, as the p-value is slightly above the common significance level of 0.05.
+
+The confidence interval indicates that the true difference in means could lie between approximately -0.1132 and 0.0012, which includes 0. This suggests some uncertainty about the exact difference in means.
+
+In summary, the t-test provides evidence of a potential difference in means, but the result is not highly significant, and there is some degree of uncertainty about the exact difference in means. Therefore, we fail to reject the null hypothesis.

@@ -1,0 +1,124 @@
+---
+title: "R Notebook"
+output: html_notebook
+---
+
+# R - the final frontier, bonfire 129 final lecture
+
+### Goals:
+
+Intake data from kaggle
+
+<https://www.kaggle.com/datasets/saadharoon27/hr-analytics-dataset>
+
+analyse it
+
+clean and transform,
+
+model/stat test
+
+visualize
+
+## I. Intake
+
+```{r}
+# Tidyverse is the primary package for processing
+library(tidyverse)
+
+# using the underscore for tibble formatted data
+df<- read_csv('HR_Analytics.csv')
+
+#open the file in a new view
+view(df)
+```
+
+## II. Clean and transform
+
+### a - update column names
+
+```{r}
+# reserved for regex method from chat gpt
+# 
+
+names(df)
+```
+
+```{r}
+names(df) <- gsub("([a-z0-9])([A-Z])", "\\1_\\2", names(df))
+names(df) <- names(df) %>% tolower()
+view(df)
+```
+
+### b - clean business travel data? (change dashes to underscores)
+
+### c - implicit boolean column
+
+```{r}
+# Checking column data types -- STR == STRUCTURE
+str(df)
+```
+
+```{r}
+# changing column types to be bool
+df <- df %>% mutate(over18 = case_when(over18 == "Y"~ "TRUE", over18 == "N" ~ "FALSE"))
+
+
+df <- df %>% mutate(attrition = case_when(attrition == "Yes"~ "TRUE", attrition == "No" ~ "FALSE"))
+
+df <- df %>% mutate(overtime = case_when(over_time == "Yes"~ "TRUE", over_time == "No" ~ "FALSE"))
+
+
+```
+
+```{r}
+view(df)
+
+```
+
+### d - null values
+
+```{r}
+colSums(is.na(df))
+```
+
+\*\*check data to see if cols with null values is important to our hypothesis\*\*
+
+SQL will be fine with null values as long as it's not a primary/foreign key column (not sure why this came up)
+
+Kali suggested doing a correlation coefficient test to see if the column with null values is correlated to our dependent/independent variables
+
+### e - start thinking about dependent/independent variables to formulate the null/alternative hypothesis
+
+$Ho:$ Education level has no impact on
+
+$Ha:$ Salary and education have a statistical relationship to one another
+
+## Step 3: Explore
+
+-   View the relationship between education level and their montly_income
+
+-   View distribution of the target column, or our dependant variable
+
+-   View distribution fo the independent variable.
+
+-   View the relationship between the month_income and all other variables as well(cor)
+
+```{r}
+ggplot(data = df, aes(x=education, y=monthly_income)) +
+  geom_point()
+```
+
+```{r}
+cor(df$education, df$monthly_income) * 100
+```
+
+## Step 4: Analyze
+
+```{r}
+model <- lm(df$monthly_income ~ df$education)
+model
+```
+
+```{r}
+summary(model)
+```
