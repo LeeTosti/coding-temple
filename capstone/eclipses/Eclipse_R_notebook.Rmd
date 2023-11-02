@@ -1,0 +1,162 @@
+---
+title: "Capstone"
+output: html_document
+date: "`r Sys.Date()`"
+---
+
+# Capstone: Solar Eclipses
+
+## I. Import libraries and data
+
+```{r}
+# Load tidyverse library
+library(tidyverse)
+```
+
+```{r}
+# Read in csv
+eclipses <- read_csv('solar.csv')
+```
+
+```{r}
+# View the data set
+view(eclipses)
+```
+
+# II. Clean data
+
+```{r}
+# Fix column names
+col_func <- function(x){
+  names(x) <- names(x) %>% str_replace_all("\\(", '')  %>% str_replace_all("\\)", '') %>%str_replace_all(" ", '_') %>% tolower()
+  return(x)
+}
+
+eclipses <- col_func(eclipses)
+eclipses
+```
+
+```{r}
+# Check for missing values
+colSums(is.na(eclipses))
+```
+
+Path_width\_(km) and central_duration have the most null values. It appears that this only happens on rows where the sun_altitude is 0. The sun_altitude is also known as the solar altitude. When the solar altitude is at zero degrees, it means that the eclipse happened at sunrise. While this data represents roughly one third of the data set, filtering it out will all for statistical testing to be done on almost 8,000 other eclipses. Therefore, any row with a sun_altitude of zero will be filtered from evaluation.
+
+```{r}
+eclipses <- eclipses %>% filter(!is.na(central_duration)) %>% filter(central_duration != '-')
+eclipses
+```
+
+```{r}
+view(eclipses)
+```
+
+```{r}
+eclipses$calendar_date <- gsub('-', '', eclipses$calendar_date)
+eclipses
+```
+
+```{r}
+eclipses <- eclipses %>%
+  separate(calendar_date, into = c("year", "month", "day"), sep = " ")
+eclipses
+```
+
+```{r}
+eclipses <- eclipses %>%
+  separate(central_duration, into = c("central_duration_min", "central_duration_sec"), sep = "m")
+eclipses
+```
+
+```{r}
+eclipses$central_duration_sec <- gsub('s', '', eclipses$central_duration_sec)
+eclipses
+```
+
+```{r}
+eclipses$year <- as.numeric(eclipses$year)
+eclipses$day <- as.numeric(eclipses$day)
+eclipses$central_duration_min <- as.numeric(eclipses$central_duration_min)
+eclipses$central_duration_sec <- as.numeric(eclipses$central_duration_sec)
+eclipses
+```
+
+```{r}
+eclipses <- eclipses %>%
+                  mutate(central_dur_min_in_secs = central_duration_min * 60) %>%
+                  mutate(total_duration_secs = central_duration_sec + central_dur_min_in_secs)
+eclipses
+```
+
+```{r}
+view(eclipses)
+```
+
+```{r}
+eclipses$eclipse_type <- gsub('\\+', ' plus', eclipses$eclipse_type)
+eclipses$eclipse_type <- gsub('-', ' minus', eclipses$eclipse_type)
+
+```
+
+```{r}
+
+```
+
+```{r}
+view(eclipses)
+```
+
+### Hypothesis
+
+$Ho:$ Eclipse type has no impact on duration of eclipse.
+
+$Ha:$ Eclipse type and duration of eclipse have a statistical relationship to one another.
+
+## III. Explore data
+
+-   Explore the relationship between eclipse type(eclipse_type) and duration of eclipse(total_duration_secs).
+
+```{r}
+ggplot(eclipses) +
+  geom_point(aes(x = eclipse_type, y = total_duration_secs))
+```
+
+```{r}
+ggplot(eclipses) +
+  geom_boxplot(aes(x = eclipse_type, y = total_duration_secs), fill = "blue") +
+  labs(title = "Box Plot of Eclipse Type by Duration", x = "Eclipse Type", y = "Duration in Seconds")
+```
+
+```{r}
+ggplot(eclipses) +
+  geom_bar(aes(x=eclipse_type))
+```
+
+```{r}
+eclipses_typeA <- eclipses %>% filter(eclipse_type == 'A')
+eclipses_typeT <- eclipses %>% filter(eclipse_type == 'T')
+eclipses_typeH <- eclipses %>% filter(eclipse_type == 'H')
+```
+
+## IV. Statistical Testing
+
+```{r}
+t.test(eclipses_typeA$total_duration_secs, eclipses_typeT$total_duration_secs)
+```
+
+```{r}
+t.test(eclipses_typeA$total_duration_secs, eclipses_typeH$total_duration_secs)
+```
+
+```{r}
+t.test(eclipses_typeT$total_duration_secs, eclipses_typeH$total_duration_secs)
+```
+
+### Interpretation of Results
+
+Based on the t test for the solar eclipse data set, the null hypothesis will be rejected. There is a clear statistical relationship between eclipse type and duration of the eclipse. The p-value for each of the comparisons (A to H, A to T, H to T) are all less than 2.2e-16. This means that the p value is so low that it is lower than the amount that RStudio goes to. This proves that it is extremely statistically significant.
+
+Additionally, the t test and the p-value should be the inverse of one another and that was definitely achieved.
+
+When comparing the three t tests, the first t test between eclipse types A and T had the lowest t value with 20.931. Even though it is the lowest of the three, it is still extremely statistically significant when compared to it's p-value. The other two t values were 83.624(eclipse types A and H) and 92.041 (eclipse types T and H). This means that eclipse types A and T have more in common to each other than H does. The probability of predicting the type of eclipse by duration is very high.
