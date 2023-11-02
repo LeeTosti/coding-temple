@@ -100,10 +100,6 @@ eclipses$eclipse_type <- gsub('-', ' minus', eclipses$eclipse_type)
 ```
 
 ```{r}
-
-```
-
-```{r}
 view(eclipses)
 ```
 
