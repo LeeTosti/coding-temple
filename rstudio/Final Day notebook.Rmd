@@ -29,10 +29,32 @@ meteor_df
 meteor_df %>% count(nametype)
 ```
 
+We are going to drop this column. The amount of data present within the column does not signify enough of a difference between values in a constant column to dictate keeping it.
+
 ## II. Clean Data
 
 -   What are the value_counts in the constant columns? Do we truly only have a single value? Or do we have maybe one or two items in another category?
 
 ```{r}
 str(meteor_df)
+```
+
+```{r}
+meteor_df <- subset(meteor_df, select= -c(GeoLocation, nametype))
+meteor_df
+
+# you could also use
+#select(meteor_df, -c(GeoLocation, nametype))
+```
+
+```{r}
+names(meteor_df) %>% str_replace_all(" ", "_")
+```
+
+```{r}
+colSums(is.na(meteor_df))
+```
+
+```{r}
+write_csv(meteor_df, 'meteor_sightings.csv')
 ```
